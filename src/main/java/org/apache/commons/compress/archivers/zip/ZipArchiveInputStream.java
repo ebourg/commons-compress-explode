@@ -220,7 +220,7 @@ public class ZipArchiveInputStream extends ArchiveInputStream {
 
         int versionMadeBy = ZipShort.getValue(LFH_BUF, off);
         off += SHORT;
-        current.entry.setPlatform((versionMadeBy >> ZipFile.BYTE_SHIFT) & ZipFile.NIBLET_MASK);
+        current.entry.setPlatform((versionMadeBy >> ZipConstants.BYTE_SHIFT) & ZipConstants.NIBLET_MASK);
 
         final GeneralPurposeBit gpFlag = GeneralPurposeBit.parse(LFH_BUF, off);
         final boolean hasUTF8Flag = gpFlag.usesUTF8ForNames();
@@ -528,13 +528,13 @@ public class ZipArchiveInputStream extends ArchiveInputStream {
      * @return true, if this stream is a zip archive stream, false otherwise
      */
     public static boolean matches(byte[] signature, int length) {
-        if (length < ZipArchiveOutputStream.LFH_SIG.length) {
+        if (length < ZipConstants.LFH_SIG.length) {
             return false;
         }
 
-        return checksig(signature, ZipArchiveOutputStream.LFH_SIG) // normal file
-            || checksig(signature, ZipArchiveOutputStream.EOCD_SIG) // empty zip
-            || checksig(signature, ZipArchiveOutputStream.DD_SIG) // split zip
+        return checksig(signature, ZipConstants.LFH_SIG) // normal file
+            || checksig(signature, ZipConstants.EOCD_SIG) // empty zip
+            || checksig(signature, ZipConstants.DD_SIG) // split zip
             || checksig(signature, ZipLong.SINGLE_SEGMENT_SPLIT_MARKER.getBytes());
     }
 
@@ -858,7 +858,7 @@ public class ZipArchiveInputStream extends ArchiveInputStream {
         // data so it will be too short.
         realSkip(entriesRead * CFH_LEN - LFH_LEN);
         findEocdRecord();
-        realSkip(ZipFile.MIN_EOCD_SIZE - WORD /* signature */ - SHORT /* comment len */);
+        realSkip(ZipConstants.MIN_EOCD_SIZE - WORD /* signature */ - SHORT /* comment len */);
         readFully(SHORT_BUF);
         // file comment
         realSkip(ZipShort.getValue(SHORT_BUF));
@@ -877,7 +877,7 @@ public class ZipArchiveInputStream extends ArchiveInputStream {
                 continue;
             }
             currentByte = readOneByte();
-            if (currentByte != ZipArchiveOutputStream.EOCD_SIG[1]) {
+            if (currentByte != ZipConstants.EOCD_SIG[1]) {
                 if (currentByte == -1) {
                     break;
                 }
@@ -885,7 +885,7 @@ public class ZipArchiveInputStream extends ArchiveInputStream {
                 continue;
             }
             currentByte = readOneByte();
-            if (currentByte != ZipArchiveOutputStream.EOCD_SIG[2]) {
+            if (currentByte != ZipConstants.EOCD_SIG[2]) {
                 if (currentByte == -1) {
                     break;
                 }
@@ -894,7 +894,7 @@ public class ZipArchiveInputStream extends ArchiveInputStream {
             }
             currentByte = readOneByte();
             if (currentByte == -1
-                || currentByte == ZipArchiveOutputStream.EOCD_SIG[3]) {
+                || currentByte == ZipConstants.EOCD_SIG[3]) {
                 break;
             }
             skipReadCall = isFirstByteOfEocdSig(currentByte);
@@ -940,7 +940,7 @@ public class ZipArchiveInputStream extends ArchiveInputStream {
     }
 
     private boolean isFirstByteOfEocdSig(int b) {
-        return b == ZipArchiveOutputStream.EOCD_SIG[0];
+        return b == ZipConstants.EOCD_SIG[0];
     }
 
     /**

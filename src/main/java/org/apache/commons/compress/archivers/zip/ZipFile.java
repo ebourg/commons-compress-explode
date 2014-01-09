@@ -77,8 +77,7 @@ import static org.apache.commons.compress.archivers.zip.ZipConstants.ZIP64_MAGIC
  */
 public class ZipFile implements Closeable {
     private static final int HASH_SIZE = 509;
-    static final int NIBLET_MASK = 0x0f;
-    static final int BYTE_SHIFT = 8;
+
     private static final int POS_0 = 0;
     private static final int POS_1 = 1;
     private static final int POS_2 = 2;
@@ -458,7 +457,7 @@ public class ZipFile implements Closeable {
         /* relative offset of local header */ + WORD;
 
     private static final long CFH_SIG =
-        ZipLong.getValue(ZipArchiveOutputStream.CFH_SIG);
+        ZipLong.getValue(ZipConstants.CFH_SIG);
 
     /**
      * Reads the central directory of the given archive and populates
@@ -513,7 +512,7 @@ public class ZipFile implements Closeable {
 
         int versionMadeBy = ZipShort.getValue(CFH_BUF, off);
         off += SHORT;
-        ze.setPlatform((versionMadeBy >> BYTE_SHIFT) & NIBLET_MASK);
+        ze.setPlatform((versionMadeBy >> ZipConstants.BYTE_SHIFT) & ZipConstants.NIBLET_MASK);
 
         off += SHORT; // skip version info
 
@@ -632,98 +631,6 @@ public class ZipFile implements Closeable {
     }
 
     /**
-     * Length of the "End of central directory record" - which is
-     * supposed to be the last structure of the archive - without file
-     * comment.
-     */
-    static final int MIN_EOCD_SIZE =
-        /* end of central dir signature    */ WORD
-        /* number of this disk             */ + SHORT
-        /* number of the disk with the     */
-        /* start of the central directory  */ + SHORT
-        /* total number of entries in      */
-        /* the central dir on this disk    */ + SHORT
-        /* total number of entries in      */
-        /* the central dir                 */ + SHORT
-        /* size of the central directory   */ + WORD
-        /* offset of start of central      */
-        /* directory with respect to       */
-        /* the starting disk number        */ + WORD
-        /* zipfile comment length          */ + SHORT;
-
-    /**
-     * Maximum length of the "End of central directory record" with a
-     * file comment.
-     */
-    private static final int MAX_EOCD_SIZE = MIN_EOCD_SIZE
-        /* maximum length of zipfile comment */ + ZIP64_MAGIC_SHORT;
-
-    /**
-     * Offset of the field that holds the location of the first
-     * central directory entry inside the "End of central directory
-     * record" relative to the start of the "End of central directory
-     * record".
-     */
-    private static final int CFD_LOCATOR_OFFSET =
-        /* end of central dir signature    */ WORD
-        /* number of this disk             */ + SHORT
-        /* number of the disk with the     */
-        /* start of the central directory  */ + SHORT
-        /* total number of entries in      */
-        /* the central dir on this disk    */ + SHORT
-        /* total number of entries in      */
-        /* the central dir                 */ + SHORT
-        /* size of the central directory   */ + WORD;
-
-    /**
-     * Length of the "Zip64 end of central directory locator" - which
-     * should be right in front of the "end of central directory
-     * record" if one is present at all.
-     */
-    private static final int ZIP64_EOCDL_LENGTH =
-        /* zip64 end of central dir locator sig */ WORD
-        /* number of the disk with the start    */
-        /* start of the zip64 end of            */
-        /* central directory                    */ + WORD
-        /* relative offset of the zip64         */
-        /* end of central directory record      */ + DWORD
-        /* total number of disks                */ + WORD;
-
-    /**
-     * Offset of the field that holds the location of the "Zip64 end
-     * of central directory record" inside the "Zip64 end of central
-     * directory locator" relative to the start of the "Zip64 end of
-     * central directory locator".
-     */
-    private static final int ZIP64_EOCDL_LOCATOR_OFFSET =
-        /* zip64 end of central dir locator sig */ WORD
-        /* number of the disk with the start    */
-        /* start of the zip64 end of            */
-        /* central directory                    */ + WORD;
-
-    /**
-     * Offset of the field that holds the location of the first
-     * central directory entry inside the "Zip64 end of central
-     * directory record" relative to the start of the "Zip64 end of
-     * central directory record".
-     */
-    private static final int ZIP64_EOCD_CFD_LOCATOR_OFFSET =
-        /* zip64 end of central dir        */
-        /* signature                       */ WORD
-        /* size of zip64 end of central    */
-        /* directory record                */ + DWORD
-        /* version made by                 */ + SHORT
-        /* version needed to extract       */ + SHORT
-        /* number of this disk             */ + WORD
-        /* number of the disk with the     */
-        /* start of the central directory  */ + WORD
-        /* total number of entries in the  */
-        /* central directory on this disk  */ + DWORD
-        /* total number of entries in the  */
-        /* central directory               */ + DWORD
-        /* size of the central directory   */ + DWORD;
-
-    /**
      * Searches for either the &quot;Zip64 end of central directory
      * locator&quot; or the &quot;End of central dir record&quot;, parses
      * it and positions the stream at the first central directory
@@ -734,17 +641,17 @@ public class ZipFile implements Closeable {
         positionAtEndOfCentralDirectoryRecord();
         boolean found = false;
         boolean searchedForZip64EOCD =
-            archive.getFilePointer() > ZIP64_EOCDL_LENGTH;
+            archive.getFilePointer() > ZipConstants.ZIP64_EOCDL_LENGTH;
         if (searchedForZip64EOCD) {
-            archive.seek(archive.getFilePointer() - ZIP64_EOCDL_LENGTH);
+            archive.seek(archive.getFilePointer() - ZipConstants.ZIP64_EOCDL_LENGTH);
             archive.readFully(WORD_BUF);
-            found = Arrays.equals(ZipArchiveOutputStream.ZIP64_EOCD_LOC_SIG,
+            found = Arrays.equals(ZipConstants.ZIP64_EOCD_LOC_SIG,
                                   WORD_BUF);
         }
         if (!found) {
             // not a ZIP64 archive
             if (searchedForZip64EOCD) {
-                skipBytes(ZIP64_EOCDL_LENGTH - WORD);
+                skipBytes(ZipConstants.ZIP64_EOCDL_LENGTH - WORD);
             }
             positionAtCentralDirectory32();
         } else {
@@ -763,16 +670,16 @@ public class ZipFile implements Closeable {
      */
     private void positionAtCentralDirectory64()
         throws IOException {
-        skipBytes(ZIP64_EOCDL_LOCATOR_OFFSET
+        skipBytes(ZipConstants.ZIP64_EOCDL_LOCATOR_OFFSET
                   - WORD /* signature has already been read */);
         archive.readFully(DWORD_BUF);
         archive.seek(ZipEightByteInteger.getLongValue(DWORD_BUF));
         archive.readFully(WORD_BUF);
-        if (!Arrays.equals(WORD_BUF, ZipArchiveOutputStream.ZIP64_EOCD_SIG)) {
+        if (!Arrays.equals(WORD_BUF, ZipConstants.ZIP64_EOCD_SIG)) {
             throw new ZipException("archive's ZIP64 end of central "
                                    + "directory locator is corrupt.");
         }
-        skipBytes(ZIP64_EOCD_CFD_LOCATOR_OFFSET
+        skipBytes(ZipConstants.ZIP64_EOCD_CFD_LOCATOR_OFFSET
                   - WORD /* signature has already been read */);
         archive.readFully(DWORD_BUF);
         archive.seek(ZipEightByteInteger.getLongValue(DWORD_BUF));
@@ -787,7 +694,7 @@ public class ZipFile implements Closeable {
      */
     private void positionAtCentralDirectory32()
         throws IOException {
-        skipBytes(CFD_LOCATOR_OFFSET);
+        skipBytes(ZipConstants.CFD_LOCATOR_OFFSET);
         archive.readFully(WORD_BUF);
         archive.seek(ZipLong.getValue(WORD_BUF));
     }
@@ -798,8 +705,7 @@ public class ZipFile implements Closeable {
      */
     private void positionAtEndOfCentralDirectoryRecord()
         throws IOException {
-        boolean found = tryToLocateSignature(MIN_EOCD_SIZE, MAX_EOCD_SIZE,
-                                             ZipArchiveOutputStream.EOCD_SIG);
+        boolean found = tryToLocateSignature(ZipConstants.MIN_EOCD_SIZE, ZipConstants.MAX_EOCD_SIZE, ZipConstants.EOCD_SIG);
         if (!found) {
             throw new ZipException("archive is not a ZIP archive");
         }
@@ -934,7 +840,7 @@ public class ZipFile implements Closeable {
     private boolean startsWithLocalFileHeader() throws IOException {
         archive.seek(0);
         archive.readFully(WORD_BUF);
-        return Arrays.equals(WORD_BUF, ZipArchiveOutputStream.LFH_SIG);
+        return Arrays.equals(WORD_BUF, ZipConstants.LFH_SIG);
     }
 
     /**

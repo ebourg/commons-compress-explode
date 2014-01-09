@@ -821,34 +821,6 @@ public class ZipArchiveOutputStream extends ArchiveOutputStream {
         }
     }
 
-    /*
-     * Various ZIP constants
-     */
-    /**
-     * local file header signature
-     */
-    static final byte[] LFH_SIG = ZipLong.LFH_SIG.getBytes();
-    /**
-     * data descriptor signature
-     */
-    static final byte[] DD_SIG = ZipLong.DD_SIG.getBytes();
-    /**
-     * central file header signature
-     */
-    static final byte[] CFH_SIG = ZipLong.CFH_SIG.getBytes();
-    /**
-     * end of central dir signature
-     */
-    static final byte[] EOCD_SIG = ZipLong.getBytes(0X06054B50L);
-    /**
-     * ZIP64 end of central dir signature
-     */
-    static final byte[] ZIP64_EOCD_SIG = ZipLong.getBytes(0X06064B50L);
-    /**
-     * ZIP64 end of central dir locator signature
-     */
-    static final byte[] ZIP64_EOCD_LOC_SIG = ZipLong.getBytes(0X07064B50L);
-
     /**
      * Writes next block of compressed data to the output stream.
      * @throws IOException on error
@@ -877,7 +849,7 @@ public class ZipArchiveOutputStream extends ArchiveOutputStream {
 
         offsets.put(ze, Long.valueOf(written));
 
-        writeOut(LFH_SIG);
+        writeOut(ZipConstants.LFH_SIG);
         written += WORD;
 
         //store method in local variable to prevent multiple method calls
@@ -991,7 +963,7 @@ public class ZipArchiveOutputStream extends ArchiveOutputStream {
         if (ze.getMethod() != DEFLATED || raf != null) {
             return;
         }
-        writeOut(DD_SIG);
+        writeOut(ZipConstants.DD_SIG);
         writeOut(ZipLong.getBytes(ze.getCrc()));
         int sizeFieldSize = WORD;
         if (!hasZip64Extra(ze)) {
@@ -1014,7 +986,7 @@ public class ZipArchiveOutputStream extends ArchiveOutputStream {
      * Zip64Mode#Never}.
      */
     protected void writeCentralFileHeader(ZipArchiveEntry ze) throws IOException {
-        writeOut(CFH_SIG);
+        writeOut(ZipConstants.CFH_SIG);
         written += WORD;
 
         final long lfhOffset = offsets.get(ze).longValue();
@@ -1156,7 +1128,7 @@ public class ZipArchiveOutputStream extends ArchiveOutputStream {
      * and {@link Zip64Mode #setUseZip64} is {@link Zip64Mode#Never}.
      */
     protected void writeCentralDirectoryEnd() throws IOException {
-        writeOut(EOCD_SIG);
+        writeOut(ZipConstants.EOCD_SIG);
 
         // disk numbers
         writeOut(ZERO);
@@ -1216,7 +1188,7 @@ public class ZipArchiveOutputStream extends ArchiveOutputStream {
 
         long offset = written;
 
-        writeOut(ZIP64_EOCD_SIG);
+        writeOut(ZipConstants.ZIP64_EOCD_SIG);
         // size, we don't have any variable length as we don't support
         // the extensible data sector, yet
         writeOut(ZipEightByteInteger
@@ -1250,7 +1222,7 @@ public class ZipArchiveOutputStream extends ArchiveOutputStream {
         // no "zip64 extensible data sector" for now
 
         // and now the "ZIP64 end of central directory locator"
-        writeOut(ZIP64_EOCD_LOC_SIG);
+        writeOut(ZipConstants.ZIP64_EOCD_LOC_SIG);
 
         // disk number holding the ZIP64 EOCD record
         writeOut(LZERO);
