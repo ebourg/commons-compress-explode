@@ -80,8 +80,6 @@ public class ZipArchiveEntry extends java.util.zip.ZipEntry
     private int internalAttributes = 0;
     private int platform = PLATFORM_FAT;
     private long externalAttributes = 0;
-    private LinkedHashMap<ZipShort, ZipExtraField> extraFields = null;
-    private UnparseableExtraFieldData unparseableExtra = null;
     private String name = null;
     private byte[] rawName = null;
     private GeneralPurposeBit gpb = new GeneralPurposeBit();
@@ -97,47 +95,6 @@ public class ZipArchiveEntry extends java.util.zip.ZipEntry
     public ZipArchiveEntry(String name) {
         super(name);
         setName(name);
-    }
-
-    /**
-     * Creates a new zip entry with fields taken from the specified zip entry.
-     *
-     * <p>Assumes the entry represents a directory if and only if the
-     * name ends with a forward slash "/".</p>
-     *
-     * @param entry the entry to get fields from
-     * @throws ZipException on error
-     */
-    public ZipArchiveEntry(java.util.zip.ZipEntry entry) throws ZipException {
-        super(entry);
-        setName(entry.getName());
-        byte[] extra = entry.getExtra();
-        if (extra != null) {
-            setExtraFields(ExtraFieldUtils.parse(extra, true,
-                                                 ExtraFieldUtils
-                                                 .UnparseableExtraField.READ));
-        } else {
-            // initializes extra data to an empty byte array
-            setExtra();
-        }
-        setMethod(entry.getMethod());
-        this.size = entry.getSize();
-    }
-
-    /**
-     * Creates a new zip entry with fields taken from the specified zip entry.
-     *
-     * <p>Assumes the entry represents a directory if and only if the
-     * name ends with a forward slash "/".</p>
-     *
-     * @param entry the entry to get fields from
-     * @throws ZipException on error
-     */
-    public ZipArchiveEntry(ZipArchiveEntry entry) throws ZipException {
-        this((java.util.zip.ZipEntry) entry);
-        setInternalAttributes(entry.getInternalAttributes());
-        setExternalAttributes(entry.getExternalAttributes());
-        setExtraFields(entry.getExtraFields(true));
     }
 
     /**
@@ -175,7 +132,6 @@ public class ZipArchiveEntry extends java.util.zip.ZipEntry
 
         e.setInternalAttributes(getInternalAttributes());
         e.setExternalAttributes(getExternalAttributes());
-        e.setExtraFields(getExtraFields(true));
         return e;
     }
 
@@ -298,208 +254,6 @@ public class ZipArchiveEntry extends java.util.zip.ZipEntry
     }
 
     /**
-     * Replaces all currently attached extra fields with the new array.
-     * @param fields an array of extra fields
-     */
-    public void setExtraFields(ZipExtraField[] fields) {
-        extraFields = new LinkedHashMap<ZipShort, ZipExtraField>();
-        for (ZipExtraField field : fields) {
-            if (field instanceof UnparseableExtraFieldData) {
-                unparseableExtra = (UnparseableExtraFieldData) field;
-            } else {
-                extraFields.put(field.getHeaderId(), field);
-            }
-        }
-        setExtra();
-    }
-
-    /**
-     * Retrieves all extra fields that have been parsed successfully.
-     * @return an array of the extra fields
-     */
-    public ZipExtraField[] getExtraFields() {
-        return getExtraFields(false);
-    }
-
-    /**
-     * Retrieves extra fields.
-     * @param includeUnparseable whether to also return unparseable
-     * extra fields as {@link UnparseableExtraFieldData} if such data
-     * exists.
-     * @return an array of the extra fields
-     *
-     * @since 1.1
-     */
-    public ZipExtraField[] getExtraFields(boolean includeUnparseable) {
-        if (extraFields == null) {
-            return !includeUnparseable || unparseableExtra == null
-                ? new ZipExtraField[0]
-                : new ZipExtraField[] { unparseableExtra };
-        }
-        List<ZipExtraField> result =
-            new ArrayList<ZipExtraField>(extraFields.values());
-        if (includeUnparseable && unparseableExtra != null) {
-            result.add(unparseableExtra);
-        }
-        return result.toArray(new ZipExtraField[0]);
-    }
-
-    /**
-     * Adds an extra field - replacing an already present extra field
-     * of the same type.
-     *
-     * <p>If no extra field of the same type exists, the field will be
-     * added as last field.</p>
-     * @param ze an extra field
-     */
-    public void addExtraField(ZipExtraField ze) {
-        if (ze instanceof UnparseableExtraFieldData) {
-            unparseableExtra = (UnparseableExtraFieldData) ze;
-        } else {
-            if (extraFields == null) {
-                extraFields = new LinkedHashMap<ZipShort, ZipExtraField>();
-            }
-            extraFields.put(ze.getHeaderId(), ze);
-        }
-        setExtra();
-    }
-
-    /**
-     * Adds an extra field - replacing an already present extra field
-     * of the same type.
-     *
-     * <p>The new extra field will be the first one.</p>
-     * @param ze an extra field
-     */
-    public void addAsFirstExtraField(ZipExtraField ze) {
-        if (ze instanceof UnparseableExtraFieldData) {
-            unparseableExtra = (UnparseableExtraFieldData) ze;
-        } else {
-            LinkedHashMap<ZipShort, ZipExtraField> copy = extraFields;
-            extraFields = new LinkedHashMap<ZipShort, ZipExtraField>();
-            extraFields.put(ze.getHeaderId(), ze);
-            if (copy != null) {
-                copy.remove(ze.getHeaderId());
-                extraFields.putAll(copy);
-            }
-        }
-        setExtra();
-    }
-
-    /**
-     * Remove an extra field.
-     * @param type the type of extra field to remove
-     */
-    public void removeExtraField(ZipShort type) {
-        if (extraFields == null) {
-            throw new java.util.NoSuchElementException();
-        }
-        if (extraFields.remove(type) == null) {
-            throw new java.util.NoSuchElementException();
-        }
-        setExtra();
-    }
-
-    /**
-     * Removes unparseable extra field data.
-     *
-     * @since 1.1
-     */
-    public void removeUnparseableExtraFieldData() {
-        if (unparseableExtra == null) {
-            throw new java.util.NoSuchElementException();
-        }
-        unparseableExtra = null;
-        setExtra();
-    }
-
-    /**
-     * Looks up an extra field by its header id.
-     *
-     * @return null if no such field exists.
-     */
-    public ZipExtraField getExtraField(ZipShort type) {
-        if (extraFields != null) {
-            return extraFields.get(type);
-        }
-        return null;
-    }
-
-    /**
-     * Looks up extra field data that couldn't be parsed correctly.
-     *
-     * @return null if no such field exists.
-     *
-     * @since 1.1
-     */
-    public UnparseableExtraFieldData getUnparseableExtraFieldData() {
-        return unparseableExtra;
-    }
-
-    /**
-     * Parses the given bytes as extra field data and consumes any
-     * unparseable data as an {@link UnparseableExtraFieldData}
-     * instance.
-     * @param extra an array of bytes to be parsed into extra fields
-     * @throws RuntimeException if the bytes cannot be parsed
-     * @throws RuntimeException on error
-     */
-    @Override
-    public void setExtra(byte[] extra) throws RuntimeException {
-        try {
-            ZipExtraField[] local =
-                ExtraFieldUtils.parse(extra, true,
-                                      ExtraFieldUtils.UnparseableExtraField.READ);
-            mergeExtraFields(local, true);
-        } catch (ZipException e) {
-            // actually this is not possible as of Commons Compress 1.1
-            throw new RuntimeException("Error parsing extra fields for entry: "
-                                       + getName() + " - " + e.getMessage(), e);
-        }
-    }
-
-    /**
-     * Unfortunately {@link java.util.zip.ZipOutputStream
-     * java.util.zip.ZipOutputStream} seems to access the extra data
-     * directly, so overriding getExtra doesn't help - we need to
-     * modify super's data directly.
-     */
-    protected void setExtra() {
-        super.setExtra(ExtraFieldUtils.mergeLocalFileDataData(getExtraFields(true)));
-    }
-
-    /**
-     * Sets the central directory part of extra fields.
-     */
-    public void setCentralDirectoryExtra(byte[] b) {
-        try {
-            ZipExtraField[] central =
-                ExtraFieldUtils.parse(b, false,
-                                      ExtraFieldUtils.UnparseableExtraField.READ);
-            mergeExtraFields(central, false);
-        } catch (ZipException e) {
-            throw new RuntimeException(e.getMessage(), e);
-        }
-    }
-
-    /**
-     * Retrieves the extra data for the local file data.
-     * @return the extra data for local file
-     */
-    public byte[] getLocalFileDataExtra() {
-        byte[] extra = getExtra();
-        return extra != null ? extra : EMPTY;
-    }
-
-    /**
-     * Retrieves the extra data for the central directory.
-     * @return the central directory extra data
-     */
-    public byte[] getCentralDirectoryExtra() {
-        return ExtraFieldUtils.mergeCentralDirectoryData(getExtraFields(true));
-    }
-
-    /**
      * Get the name of the entry.
      * @return the entry name
      */
@@ -614,42 +368,6 @@ public class ZipArchiveEntry extends java.util.zip.ZipEntry
         gpb = b;
     }
 
-    /**
-     * If there are no extra fields, use the given fields as new extra
-     * data - otherwise merge the fields assuming the existing fields
-     * and the new fields stem from different locations inside the
-     * archive.
-     * @param f the extra fields to merge
-     * @param local whether the new fields originate from local data
-     */
-    private void mergeExtraFields(ZipExtraField[] f, boolean local)
-        throws ZipException {
-        if (extraFields == null) {
-            setExtraFields(f);
-        } else {
-            for (ZipExtraField element : f) {
-                ZipExtraField existing;
-                if (element instanceof UnparseableExtraFieldData) {
-                    existing = unparseableExtra;
-                } else {
-                    existing = getExtraField(element.getHeaderId());
-                }
-                if (existing == null) {
-                    addExtraField(element);
-                } else {
-                    if (local) {
-                        byte[] b = element.getLocalFileDataData();
-                        existing.parseFromLocalFileData(b, 0, b.length);
-                    } else {
-                        byte[] b = element.getCentralDirectoryData();
-                        existing.parseFromCentralDirectoryData(b, 0, b.length);
-                    }
-                }
-            }
-            setExtra();
-        }
-    }
-
     public Date getLastModifiedDate() {
         return new Date(getTime());
     }
@@ -692,10 +410,6 @@ public class ZipArchiveEntry extends java.util.zip.ZipEntry
             && getSize() == other.getSize()
             && getCrc() == other.getCrc()
             && getCompressedSize() == other.getCompressedSize()
-            && Arrays.equals(getCentralDirectoryExtra(),
-                             other.getCentralDirectoryExtra())
-            && Arrays.equals(getLocalFileDataExtra(),
-                             other.getLocalFileDataExtra())
             && gpb.equals(other.gpb);
     }
 }

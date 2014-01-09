@@ -33,25 +33,6 @@ import org.junit.Test;
 
 public class ZipArchiveInputStreamTest {
 
-    /**
-     * @see "https://issues.apache.org/jira/browse/COMPRESS-176"
-     */
-    @Test
-    public void winzipBackSlashWorkaround() throws Exception {
-        ZipArchiveInputStream in = null;
-        try {
-            in = new ZipArchiveInputStream(new FileInputStream(getFile("test-winzip.zip")));
-            ZipArchiveEntry zae = in.getNextZipEntry();
-            zae = in.getNextZipEntry();
-            zae = in.getNextZipEntry();
-            assertEquals("\u00e4/", zae.getName());
-        } finally {
-            if (in != null) {
-                in.close();
-            }
-        }
-    }
-
     @Test
     public void shouldConsumeArchiveCompletely() throws Exception {
         InputStream is = ZipArchiveInputStreamTest.class

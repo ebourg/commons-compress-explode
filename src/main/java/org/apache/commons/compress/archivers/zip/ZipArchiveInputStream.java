@@ -35,9 +35,7 @@ import org.apache.commons.compress.archivers.ArchiveEntry;
 import org.apache.commons.compress.archivers.ArchiveInputStream;
 import org.apache.commons.compress.utils.IOUtils;
 
-import static org.apache.commons.compress.archivers.zip.ZipConstants.DWORD;
-import static org.apache.commons.compress.archivers.zip.ZipConstants.SHORT;
-import static org.apache.commons.compress.archivers.zip.ZipConstants.WORD;
+import static org.apache.commons.compress.archivers.zip.ZipConstants.*;
 
 /**
  * Implements an input stream that can read Zip archives.
@@ -57,9 +55,6 @@ public class ZipArchiveInputStream extends ArchiveInputStream {
     
     /** The zip encoding to use for filenames and the file comment. */
     private final ZipEncoding zipEncoding;
-
-    /** Whether to look for and use Unicode extra fields. */
-    private final boolean useUnicodeExtraFields;
 
     /** Wrapped stream, will always be a PushbackInputStream. */
     private final InputStream in;
@@ -173,7 +168,6 @@ public class ZipArchiveInputStream extends ArchiveInputStream {
                                  boolean useUnicodeExtraFields,
                                  boolean allowStoredEntriesWithDataDescriptor) {
         zipEncoding = ZipEncodingHelper.getZipEncoding(encoding);
-        this.useUnicodeExtraFields = useUnicodeExtraFields;
         in = new PushbackInputStream(inputStream, buf.capacity());
         this.allowStoredEntriesWithDataDescriptor =
             allowStoredEntriesWithDataDescriptor;
@@ -263,15 +257,9 @@ public class ZipArchiveInputStream extends ArchiveInputStream {
         readFully(extraData);
         current.entry.setExtra(extraData);
 
-        if (!hasUTF8Flag && useUnicodeExtraFields) {
-            ZipUtil.setNameAndCommentFromExtraFields(current.entry, fileName, null);
-        }
-
         if (!current.hasDataDescriptor) {
-            {
-                current.entry.setCompressedSize(cSize.getValue());
-                current.entry.setSize(size.getValue());
-            }
+            current.entry.setCompressedSize(cSize.getValue());
+            current.entry.setSize(size.getValue());
         }
 
         if (current.entry.getCompressedSize() != -1) {
