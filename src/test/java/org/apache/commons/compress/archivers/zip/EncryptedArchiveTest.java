@@ -28,28 +28,6 @@ import junit.framework.TestCase;
 
 public class EncryptedArchiveTest extends TestCase {
 
-    public void testReadPasswordEncryptedEntryViaZipFile()
-        throws IOException {
-        File file = getFile("password-encrypted.zip");
-        ZipFile zf = null;
-        try {
-            zf = new ZipFile(file);
-            ZipArchiveEntry zae = zf.getEntry("LICENSE.txt");
-            assertTrue(zae.getGeneralPurposeBit().usesEncryption());
-            assertFalse(zae.getGeneralPurposeBit().usesStrongEncryption());
-            assertFalse(zf.canReadEntryData(zae));
-            try {
-                zf.getInputStream(zae);
-                fail("expected an exception");
-            } catch (UnsupportedZipFeatureException ex) {
-                assertSame(UnsupportedZipFeatureException.Feature.ENCRYPTION,
-                           ex.getFeature());
-            }
-        } finally {
-            ZipFile.closeQuietly(zf);
-        }
-    }
-
     public void testReadPasswordEncryptedEntryViaStream()
         throws IOException {
         File file = getFile("password-encrypted.zip");

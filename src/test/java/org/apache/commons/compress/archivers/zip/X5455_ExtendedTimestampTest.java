@@ -17,31 +17,23 @@
  */
 package org.apache.commons.compress.archivers.zip;
 
-import org.junit.After;
-import org.junit.Before;
-import org.junit.Test;
-
 import java.io.File;
-import java.io.FileOutputStream;
-import java.io.IOException;
-import java.io.OutputStream;
+import java.io.FileInputStream;
 import java.text.SimpleDateFormat;
 import java.util.Arrays;
 import java.util.Calendar;
 import java.util.Date;
-import java.util.Enumeration;
 import java.util.TimeZone;
 import java.util.zip.ZipException;
 
-import static org.apache.commons.compress.AbstractTestCase.getFile;
-import static org.apache.commons.compress.AbstractTestCase.mkdir;
-import static org.apache.commons.compress.AbstractTestCase.rmdir;
-import static org.apache.commons.compress.archivers.zip.X5455_ExtendedTimestamp.ACCESS_TIME_BIT;
-import static org.apache.commons.compress.archivers.zip.X5455_ExtendedTimestamp.CREATE_TIME_BIT;
-import static org.apache.commons.compress.archivers.zip.X5455_ExtendedTimestamp.MODIFY_TIME_BIT;
+import org.junit.After;
+import org.junit.Before;
+import org.junit.Test;
+
+import static org.apache.commons.compress.AbstractTestCase.*;
+import static org.apache.commons.compress.archivers.zip.X5455_ExtendedTimestamp.*;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
@@ -103,17 +95,16 @@ public class X5455_ExtendedTimestampTest {
          */
 
         File archive = getFile("COMPRESS-210_unix_time_zip_test.zip");
-        ZipFile zf = null;
+        ZipArchiveInputStream zf = null;
 
         try {
-            zf = new ZipFile(archive);
-            Enumeration<ZipArchiveEntry> en = zf.getEntries();
+            zf = new ZipArchiveInputStream(new FileInputStream(archive));
+            ZipArchiveEntry zae = null;
 
             // We expect EVERY entry of this zip file
             // to contain extra field 0x5455.
-            while (en.hasMoreElements()) {
+            while ((zae = zf.getNextZipEntry()) != null) {
 
-                ZipArchiveEntry zae = en.nextElement();
                 String name = zae.getName();
                 X5455_ExtendedTimestamp xf = (X5455_ExtendedTimestamp) zae.getExtraField(X5455);
                 Date z = adjustFromGMTToExpectedOffset(zae.getLastModifiedDate());
@@ -403,38 +394,6 @@ public class X5455_ExtendedTimestampTest {
         parseReparse((byte) 71, MAX_TIME_SECONDS, (byte) 7, MOD_AC_CR_MAX, MOD_MAX);
         parseReparse((byte) 127, MAX_TIME_SECONDS, (byte) 7, MOD_AC_CR_MAX, MOD_MAX);
         parseReparse((byte) -1, MAX_TIME_SECONDS, (byte) 7, MOD_AC_CR_MAX, MOD_MAX);
-    }
-
-    @Test
-    public void testWriteReadRoundtrip() throws IOException {
-        tmpDir = mkdir("X5455");
-        File output = new File(tmpDir, "write_rewrite.zip");
-        final OutputStream out = new FileOutputStream(output);
-        Date d = new Date(97, 8, 24, 15, 10, 2);
-        ZipArchiveOutputStream os = null;
-        try {
-            os = new ZipArchiveOutputStream(out);
-            ZipArchiveEntry ze = new ZipArchiveEntry("foo");
-            xf.setModifyJavaTime(d);
-            xf.setFlags((byte) 1);
-            ze.addExtraField(xf);
-            os.putArchiveEntry(ze);
-            os.closeArchiveEntry();
-        } finally {
-            if (os != null) {
-                os.close();
-            }
-        }
-        out.close();
-        
-        ZipFile zf = new ZipFile(output);
-        ZipArchiveEntry ze = zf.getEntry("foo");
-        X5455_ExtendedTimestamp ext =
-            (X5455_ExtendedTimestamp) ze.getExtraField(X5455);
-        assertNotNull(ext);
-        assertTrue(ext.isBit0_modifyTimePresent());
-        assertEquals(d, ext.getModifyJavaTime());
-        zf.close();
     }
 
     public void testBitsAreSetWithTime() {

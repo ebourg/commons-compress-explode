@@ -18,13 +18,10 @@
  */
 package org.apache.commons.compress.archivers;
 
-import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.InputStream;
-import java.io.OutputStream;
 
 import org.apache.commons.compress.archivers.zip.ZipArchiveInputStream;
-import org.apache.commons.compress.archivers.zip.ZipArchiveOutputStream;
 import org.apache.commons.compress.utils.IOUtils;
 
 /**
@@ -154,36 +151,6 @@ public class ArchiveStreamFactory {
             } else {
                 return new ZipArchiveInputStream(in);
             }
-        }
-
-        throw new ArchiveException("Archiver: " + archiverName + " not found.");
-    }
-
-    /**
-     * Create an archive output stream from an archiver name and an input stream.
-     * 
-     * @param archiverName the archive name, i.e. "ar", "zip", "tar", "jar" or "cpio"
-     * @param out the output stream
-     * @return the archive output stream
-     * @throws ArchiveException if the archiver name is not known
-     * @throws IllegalArgumentException if the archiver name or stream is null
-     */
-    public ArchiveOutputStream createArchiveOutputStream(
-            final String archiverName, final OutputStream out)
-            throws ArchiveException {
-        if (archiverName == null) {
-            throw new IllegalArgumentException("Archivername must not be null.");
-        }
-        if (out == null) {
-            throw new IllegalArgumentException("OutputStream must not be null.");
-        }
-
-        if (ZIP.equalsIgnoreCase(archiverName)) {
-            ZipArchiveOutputStream zip = new ZipArchiveOutputStream(out);
-            if (entryEncoding != null) {
-                zip.setEncoding(entryEncoding);
-            }
-            return zip;
         }
 
         throw new ArchiveException("Archiver: " + archiverName + " not found.");

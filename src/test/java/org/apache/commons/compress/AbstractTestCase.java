@@ -19,7 +19,6 @@
 package org.apache.commons.compress;
 
 import java.io.BufferedInputStream;
-import java.io.Closeable;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
@@ -29,15 +28,12 @@ import java.io.InputStream;
 import java.io.OutputStream;
 import java.net.URI;
 import java.net.URL;
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
 
 import junit.framework.TestCase;
-
 import org.apache.commons.compress.archivers.ArchiveEntry;
 import org.apache.commons.compress.archivers.ArchiveInputStream;
-import org.apache.commons.compress.archivers.ArchiveOutputStream;
 import org.apache.commons.compress.archivers.ArchiveStreamFactory;
 import org.apache.commons.compress.utils.IOUtils;
 
@@ -148,141 +144,6 @@ public abstract class AbstractTestCase extends TestCase {
     }
 
     /**
-     * Creates an archive of textbased files in several directories. The
-     * archivername is the factory identifier for the archiver, for example zip,
-     * tar, cpio, jar, ar. The archive is created as a temp file.
-     *
-     * The archive contains the following files:
-     * <ul>
-     * <li>testdata/test1.xml</li>
-     * <li>testdata/test2.xml</li>
-     * <li>test/test3.xml</li>
-     * <li>bla/test4.xml</li>
-     * <li>bla/test5.xml</li>
-     * <li>bla/blubber/test6.xml</li>
-     * <li>test.txt</li>
-     * <li>something/bla</li>
-     * <li>test with spaces.txt</li>
-     * </ul>
-     *
-     * @param archivename
-     *            the identifier of this archive
-     * @return the newly created file
-     * @throws Exception
-     *             in case something goes wrong
-     */
-    protected File createArchive(String archivename) throws Exception {
-        ArchiveOutputStream out = null;
-        OutputStream stream = null;
-        try {
-            archive = File.createTempFile("test", "." + archivename);
-            archive.deleteOnExit();
-            archiveList = new ArrayList<String>();
-
-            stream = new FileOutputStream(archive);
-            out = factory.createArchiveOutputStream(archivename, stream);
-
-            final File file1 = getFile("test1.xml");
-            final File file2 = getFile("test2.xml");
-            final File file3 = getFile("test3.xml");
-            final File file4 = getFile("test4.xml");
-            final File file5 = getFile("test.txt");
-            final File file6 = getFile("test with spaces.txt");
-
-            addArchiveEntry(out, "testdata/test1.xml", file1);
-            addArchiveEntry(out, "testdata/test2.xml", file2);
-            addArchiveEntry(out, "test/test3.xml", file3);
-            addArchiveEntry(out, "bla/test4.xml", file4);
-            addArchiveEntry(out, "bla/test5.xml", file4);
-            addArchiveEntry(out, "bla/blubber/test6.xml", file4);
-            addArchiveEntry(out, "test.txt", file5);
-            addArchiveEntry(out, "something/bla", file6);
-            addArchiveEntry(out, "test with spaces.txt", file6);
-
-            out.finish();
-            return archive;
-        } finally {
-            if (out != null) {
-                out.close();
-            } else if (stream != null) {
-                stream.close();
-            }
-        }
-    }
-
-    /**
-     * Add an entry to the archive, and keep track of the names in archiveList.
-     *
-     * @param out
-     * @param file1
-     * @throws IOException
-     * @throws FileNotFoundException
-     */
-    private void addArchiveEntry(ArchiveOutputStream out, String filename, final File infile)
-            throws IOException, FileNotFoundException {
-        ArchiveEntry entry = out.createArchiveEntry(infile, filename);
-        out.putArchiveEntry(entry);
-        IOUtils.copy(new FileInputStream(infile), out);
-        out.closeArchiveEntry();
-        archiveList.add(filename);
-    }
-
-    /**
-     * Create an empty archive.
-     * @param archivename
-     * @return the archive File
-     * @throws Exception
-     */
-    protected File createEmptyArchive(String archivename) throws Exception {
-        ArchiveOutputStream out = null;
-        OutputStream stream = null;
-        archiveList = new ArrayList<String>();
-        try {
-            archive = File.createTempFile("empty", "." + archivename);
-            archive.deleteOnExit();
-            stream = new FileOutputStream(archive);
-            out = factory.createArchiveOutputStream(archivename, stream);
-            out.finish();
-        } finally {
-            if (out != null) {
-                out.close();
-            } else if (stream != null) {
-                stream.close();
-            }
-        }
-        return archive;
-    }
-
-    /**
-     * Create an archive with a single file "test1.xml".
-     *
-     * @param archivename
-     * @return the archive File
-     * @throws Exception
-     */
-    protected File createSingleEntryArchive(String archivename) throws Exception {
-        ArchiveOutputStream out = null;
-        OutputStream stream = null;
-        archiveList = new ArrayList<String>();
-        try {
-            archive = File.createTempFile("empty", "." + archivename);
-            archive.deleteOnExit();
-            stream = new FileOutputStream(archive);
-            out = factory.createArchiveOutputStream(archivename, stream);
-            // Use short file name so does not cause problems for ar
-            addArchiveEntry(out, "test1.xml", getFile("test1.xml"));
-            out.finish();
-        } finally {
-            if (out != null) {
-                out.close();
-            } else if (stream != null) {
-                stream.close();
-            }
-        }
-        return archive;
-    }
-
-    /**
      * Checks if an archive contains all expected files.
      *
      * @param archive
@@ -386,36 +247,4 @@ public abstract class AbstractTestCase extends TestCase {
         return entry.getName();
     }
 
-    /**
-     * Creates a temporary directory and a temporary file inside that
-     * directory, returns both of them (the directory is the first
-     * element of the two element array).
-     */
-    protected File[] createTempDirAndFile() throws IOException {
-        File tmpDir = mkdir("testdir");
-        tmpDir.deleteOnExit();
-        File tmpFile = File.createTempFile("testfile", "", tmpDir);
-        tmpFile.deleteOnExit();
-        FileOutputStream fos = new FileOutputStream(tmpFile);
-        try {
-            fos.write(new byte[] {'f', 'o', 'o'});
-            return new File[] {tmpDir, tmpFile};
-        } finally {
-            fos.close();
-        }
-    }
-
-    protected void closeQuietly(Closeable closeable){
-        if (closeable != null) {
-            try {
-                closeable.close();
-            } catch (IOException ignored) {
-                // ignored
-            }
-        }
-    }
-
-    protected static interface StreamWrapper<I extends InputStream> {
-        I wrap(InputStream in) throws Exception;
-    }
 }

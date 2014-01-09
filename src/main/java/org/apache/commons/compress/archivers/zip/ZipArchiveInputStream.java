@@ -58,6 +58,8 @@ import static org.apache.commons.compress.archivers.zip.ZipConstants.ZIP64_MAGIC
  */
 public class ZipArchiveInputStream extends ArchiveInputStream {
 
+    static final int BUFFER_SIZE = 512;
+    
     /** The zip encoding to use for filenames and the file comment. */
     private final ZipEncoding zipEncoding;
 
@@ -71,7 +73,7 @@ public class ZipArchiveInputStream extends ArchiveInputStream {
     private final Inflater inf = new Inflater(true);
 
     /** Buffer used to read from the wrapped stream. */
-    private final ByteBuffer buf = ByteBuffer.allocate(ZipArchiveOutputStream.BUFFER_SIZE);
+    private final ByteBuffer buf = ByteBuffer.allocate(BUFFER_SIZE);
 
     /** The entry that is currently being read. */
     private CurrentEntry current = null;
@@ -374,9 +376,9 @@ public class ZipArchiveInputStream extends ArchiveInputStream {
         }
 
         int read;
-        if (current.entry.getMethod() == ZipArchiveOutputStream.STORED) {
+        if (current.entry.getMethod() == ZipEntry.STORED) {
             read = readStored(buffer, offset, length);
-        } else if (current.entry.getMethod() == ZipArchiveOutputStream.DEFLATED) {
+        } else if (current.entry.getMethod() == ZipEntry.DEFLATED) {
             read = readDeflated(buffer, offset, length);
         } else if (current.entry.getMethod() == ZipMethod.UNSHRINKING.getCode()
                 || current.entry.getMethod() == ZipMethod.IMPLODING.getCode()) {
@@ -580,7 +582,7 @@ public class ZipArchiveInputStream extends ArchiveInputStream {
         } else {
             skip(Long.MAX_VALUE);
 
-            long inB = current.entry.getMethod() == ZipArchiveOutputStream.DEFLATED
+            long inB = current.entry.getMethod() == ZipEntry.DEFLATED
                        ? getBytesInflated() : current.bytesRead;
 
             // this is at most a single read() operation and can't
@@ -739,7 +741,7 @@ public class ZipArchiveInputStream extends ArchiveInputStream {
         int ddLen = current.usesZip64 ? WORD + 2 * DWORD : 3 * WORD;
 
         while (!done) {
-            int r = in.read(buf.array(), off, ZipArchiveOutputStream.BUFFER_SIZE - off);
+            int r = in.read(buf.array(), off, BUFFER_SIZE - off);
             if (r <= 0) {
                 // read the whole archive without ever finding a
                 // central directory

@@ -52,33 +52,6 @@ public class ZipArchiveInputStreamTest {
         }
     }
 
-    /**
-     * @see "https://issues.apache.org/jira/browse/COMPRESS-189"
-     */
-    @Test
-    public void properUseOfInflater() throws Exception {
-        ZipFile zf = null;
-        ZipArchiveInputStream in = null;
-        try {
-            zf = new ZipFile(getFile("COMPRESS-189.zip"));
-            ZipArchiveEntry zae = zf.getEntry("USD0558682-20080101.ZIP");
-            in = new ZipArchiveInputStream(new BufferedInputStream(zf.getInputStream(zae)));
-            ZipArchiveEntry innerEntry;
-            while ((innerEntry = in.getNextZipEntry()) != null) {
-                if (innerEntry.getName().endsWith("XML")) {
-                    assertTrue(0 < in.read());
-                }
-            }
-        } finally {
-            if (zf != null) {
-                zf.close();
-            }
-            if (in != null) {
-                in.close();
-            }
-        }
-    }
-
     @Test
     public void shouldConsumeArchiveCompletely() throws Exception {
         InputStream is = ZipArchiveInputStreamTest.class

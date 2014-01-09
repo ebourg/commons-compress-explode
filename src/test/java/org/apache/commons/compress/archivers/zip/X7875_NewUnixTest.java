@@ -22,6 +22,7 @@ import org.junit.Before;
 import org.junit.Test;
 
 import java.io.File;
+import java.io.FileInputStream;
 import java.util.Arrays;
 import java.util.Enumeration;
 import java.util.zip.ZipException;
@@ -46,17 +47,16 @@ public class X7875_NewUnixTest {
     @Test
     public void testSampleFile() throws Exception {
         File archive = getFile("COMPRESS-211_uid_gid_zip_test.zip");
-        ZipFile zf = null;
+        ZipArchiveInputStream zf = null;
 
         try {
-            zf = new ZipFile(archive);
-            Enumeration<ZipArchiveEntry> en = zf.getEntries();
+            zf = new ZipArchiveInputStream(new FileInputStream(archive));
+            ZipArchiveEntry zae = null;
 
             // We expect EVERY entry of this zip file (dir & file) to
             // contain extra field 0x7875.
-            while (en.hasMoreElements()) {
+            while ((zae = zf.getNextZipEntry()) != null) {
 
-                ZipArchiveEntry zae = en.nextElement();
                 String name = zae.getName();
                 X7875_NewUnix xf = (X7875_NewUnix) zae.getExtraField(X7875);
 
