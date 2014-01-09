@@ -43,21 +43,6 @@ final class ZipConstants {
     /** ZIP specification version that introduced data descriptor method */
     static final int DATA_DESCRIPTOR_MIN_VERSION = 20;
 
-    /** ZIP specification version that introduced ZIP64 */
-    static final int ZIP64_MIN_VERSION = 45;
-
-    /**
-     * Value stored in two-byte size and similar fields if ZIP64
-     * extensions are used.
-     */
-    static final int ZIP64_MAGIC_SHORT = 0xFFFF;
-
-    /**
-     * Value stored in four-byte size and similar fields if ZIP64
-     * extensions are used.
-     */
-    static final long ZIP64_MAGIC = 0xFFFFFFFFL;
-
     /** Local file header signature */
     static final byte[] LFH_SIG = ZipLong.LFH_SIG.getBytes();
     
@@ -70,13 +55,6 @@ final class ZipConstants {
     /** End of central dir signature */
     static final byte[] EOCD_SIG = ZipLong.getBytes(0X06054B50L);
     
-    /** ZIP64 end of central dir signature */
-    static final byte[] ZIP64_EOCD_SIG = ZipLong.getBytes(0X06064B50L);
-    
-    /** ZIP64 end of central dir locator signature */
-    static final byte[] ZIP64_EOCD_LOC_SIG = ZipLong.getBytes(0X07064B50L);
-    
-
     /**
      * Length of the "End of central directory record" - which is
      * supposed to be the last structure of the archive - without file
@@ -98,13 +76,6 @@ final class ZipConstants {
         /* zipfile comment length          */ + SHORT;
 
     /**
-     * Maximum length of the "End of central directory record" with a
-     * file comment.
-     */
-    static final int MAX_EOCD_SIZE = MIN_EOCD_SIZE
-        /* maximum length of zipfile comment */ + ZIP64_MAGIC_SHORT;
-
-    /**
      * Offset of the field that holds the location of the first
      * central directory entry inside the "End of central directory
      * record" relative to the start of the "End of central directory
@@ -120,54 +91,6 @@ final class ZipConstants {
         /* total number of entries in      */
         /* the central dir                 */ + SHORT
         /* size of the central directory   */ + WORD;
-
-    /**
-     * Length of the "Zip64 end of central directory locator" - which
-     * should be right in front of the "end of central directory
-     * record" if one is present at all.
-     */
-    static final int ZIP64_EOCDL_LENGTH =
-        /* zip64 end of central dir locator sig */ WORD
-        /* number of the disk with the start    */
-        /* start of the zip64 end of            */
-        /* central directory                    */ + WORD
-        /* relative offset of the zip64         */
-        /* end of central directory record      */ + DWORD
-        /* total number of disks                */ + WORD;
-
-    /**
-     * Offset of the field that holds the location of the "Zip64 end
-     * of central directory record" inside the "Zip64 end of central
-     * directory locator" relative to the start of the "Zip64 end of
-     * central directory locator".
-     */
-    static final int ZIP64_EOCDL_LOCATOR_OFFSET =
-        /* zip64 end of central dir locator sig */ WORD
-        /* number of the disk with the start    */
-        /* start of the zip64 end of            */
-        /* central directory                    */ + WORD;
-
-    /**
-     * Offset of the field that holds the location of the first
-     * central directory entry inside the "Zip64 end of central
-     * directory record" relative to the start of the "Zip64 end of
-     * central directory record".
-     */
-    static final int ZIP64_EOCD_CFD_LOCATOR_OFFSET =
-        /* zip64 end of central dir        */
-        /* signature                       */ WORD
-        /* size of zip64 end of central    */
-        /* directory record                */ + DWORD
-        /* version made by                 */ + SHORT
-        /* version needed to extract       */ + SHORT
-        /* number of this disk             */ + WORD
-        /* number of the disk with the     */
-        /* start of the central directory  */ + WORD
-        /* total number of entries in the  */
-        /* central directory on this disk  */ + DWORD
-        /* total number of entries in the  */
-        /* central directory               */ + DWORD
-        /* size of the central directory   */ + DWORD;
 
     static final int NIBLET_MASK = 0x0f;
     static final int BYTE_SHIFT = 8;

@@ -38,7 +38,6 @@ import org.apache.commons.compress.utils.IOUtils;
 import static org.apache.commons.compress.archivers.zip.ZipConstants.DWORD;
 import static org.apache.commons.compress.archivers.zip.ZipConstants.SHORT;
 import static org.apache.commons.compress.archivers.zip.ZipConstants.WORD;
-import static org.apache.commons.compress.archivers.zip.ZipConstants.ZIP64_MAGIC;
 
 /**
  * Implements an input stream that can read Zip archives.
@@ -48,10 +47,6 @@ import static org.apache.commons.compress.archivers.zip.ZipConstants.ZIP64_MAGIC
  * from the header.</p>
  *
  * <p>The {@link ZipFile} class is preferred when reading from files.</p>
- *
- * <p>As of Apache Commons Compress it transparently supports Zip64
- * extensions and thus individual entries and archives larger than 4
- * GB or with more than 65536 entries.</p>
  *
  * @see ZipFile
  * @NotThreadSafe
@@ -130,7 +125,7 @@ public class ZipArchiveInputStream extends ArchiveInputStream {
         relative offset of local header WORD
     */
 
-    private static final long TWO_EXP_32 = ZIP64_MAGIC + 1;
+    private static final long TWO_EXP_32 = 0x100000000L;
 
     // cached buffers - must only be used locally in the class (COMPRESS-172 - reduce garbage collection)
     private final byte[] LFH_BUF = new byte[LFH_LEN];
@@ -272,7 +267,12 @@ public class ZipArchiveInputStream extends ArchiveInputStream {
             ZipUtil.setNameAndCommentFromExtraFields(current.entry, fileName, null);
         }
 
-        processZip64Extra(size, cSize);
+        if (!current.hasDataDescriptor) {
+            {
+                current.entry.setCompressedSize(cSize.getValue());
+                current.entry.setSize(size.getValue());
+            }
+        }
 
         if (current.entry.getCompressedSize() != -1) {
             if (current.entry.getMethod() == ZipMethod.IMPLODING.getCode()) {
@@ -306,28 +306,6 @@ public class ZipArchiveInputStream extends ArchiveInputStream {
             readFully(missedLfhBytes);
             System.arraycopy(lfh, 4, lfh, 0, LFH_LEN - 4);
             System.arraycopy(missedLfhBytes, 0, lfh, LFH_LEN - 4, 4);
-        }
-    }
-
-    /**
-     * Records whether a Zip64 extra is present and sets the size
-     * information from it if sizes are 0xFFFFFFFF and the entry
-     * doesn't use a data descriptor.
-     */
-    private void processZip64Extra(ZipLong size, ZipLong cSize) {
-        Zip64ExtendedInformationExtraField z64 =
-            (Zip64ExtendedInformationExtraField) 
-            current.entry.getExtraField(Zip64ExtendedInformationExtraField.HEADER_ID);
-        current.usesZip64 = z64 != null;
-        if (!current.hasDataDescriptor) {
-            if (z64 != null // same as current.usesZip64 but avoids NPE warning
-                    && (cSize.equals(ZipLong.ZIP64_MAGIC) || size.equals(ZipLong.ZIP64_MAGIC)) ) {
-                current.entry.setCompressedSize(z64.getCompressedSize().getLongValue());
-                current.entry.setSize(z64.getSize().getLongValue());
-            } else {
-                current.entry.setCompressedSize(cSize.getValue());
-                current.entry.setSize(size.getValue());
-            }
         }
     }
 
@@ -738,7 +716,7 @@ public class ZipArchiveInputStream extends ArchiveInputStream {
         boolean done = false;
 
         // length of DD without signature
-        int ddLen = current.usesZip64 ? WORD + 2 * DWORD : 3 * WORD;
+        int ddLen = 3 * WORD;
 
         while (!done) {
             int r = in.read(buf.array(), off, BUFFER_SIZE - off);
@@ -960,11 +938,6 @@ public class ZipArchiveInputStream extends ArchiveInputStream {
          * Does the entry use a data descriptor?
          */
         private boolean hasDataDescriptor;
-
-        /**
-         * Does the entry have a ZIP64 extended information extra field.
-         */
-        private boolean usesZip64;
 
         /**
          * Number of bytes of entry content read by the client if the
