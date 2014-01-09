@@ -28,8 +28,8 @@ import java.util.zip.CRC32;
 import java.util.zip.CheckedOutputStream;
 
 import junit.framework.TestCase;
-import org.apache.commons.compress.utils.BoundedInputStream;
 import org.apache.commons.compress.utils.IOUtils;
+import org.apache.commons.io.input.BoundedInputStream;
 
 public class ExplodeSupportTest extends TestCase {
 
