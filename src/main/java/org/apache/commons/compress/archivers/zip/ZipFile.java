@@ -367,8 +367,6 @@ public class ZipFile implements Closeable {
         switch (ZipMethod.getMethodByCode(ze.getMethod())) {
             case STORED:
                 return bis;
-            case UNSHRINKING:
-                return new UnshrinkingInputStream(bis);
             case IMPLODING:
                 return new ExplodingInputStream(ze.getGeneralPurposeBit().getSlidingDictionarySize(),
                         ze.getGeneralPurposeBit().getNumberOfShannonFanoTrees(), new BufferedInputStream(bis));

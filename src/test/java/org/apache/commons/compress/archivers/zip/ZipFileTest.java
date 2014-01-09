@@ -238,26 +238,6 @@ public class ZipFileTest extends TestCase {
         assertEquals(26101, ze.getSize());
     }
 
-    public void testUnshrinking() throws Exception {
-        zf = new ZipFile(getFile("SHRUNK.ZIP"));
-        ZipArchiveEntry test = zf.getEntry("TEST1.XML");
-        FileInputStream original = new FileInputStream(getFile("test1.xml"));
-        try {
-            assertArrayEquals(IOUtils.toByteArray(original),
-                              IOUtils.toByteArray(zf.getInputStream(test)));
-        } finally {
-            original.close();
-        }
-        test = zf.getEntry("TEST2.XML");
-        original = new FileInputStream(getFile("test2.xml"));
-        try {
-            assertArrayEquals(IOUtils.toByteArray(original),
-                              IOUtils.toByteArray(zf.getInputStream(test)));
-        } finally {
-            original.close();
-        }
-    }
-
     /*
      * ordertest.zip has been handcrafted.
      *

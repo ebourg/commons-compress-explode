@@ -273,9 +273,7 @@ public class ZipArchiveInputStream extends ArchiveInputStream {
         processZip64Extra(size, cSize);
 
         if (current.entry.getCompressedSize() != -1) {
-            if (current.entry.getMethod() == ZipMethod.UNSHRINKING.getCode()) {
-                current.in = new UnshrinkingInputStream(new BoundedInputStream(in, current.entry.getCompressedSize()));
-            } else if (current.entry.getMethod() == ZipMethod.IMPLODING.getCode()) {
+            if (current.entry.getMethod() == ZipMethod.IMPLODING.getCode()) {
                 current.in = new ExplodingInputStream(
                         current.entry.getGeneralPurposeBit().getSlidingDictionarySize(),
                         current.entry.getGeneralPurposeBit().getNumberOfShannonFanoTrees(),

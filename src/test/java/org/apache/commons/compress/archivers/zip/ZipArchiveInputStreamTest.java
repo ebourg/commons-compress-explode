@@ -122,31 +122,4 @@ public class ZipArchiveInputStreamTest {
             zae = in.getNextZipEntry();
         }
     }
-
-    @Test
-    public void testUnshrinkEntry() throws Exception {
-        ZipArchiveInputStream in = new ZipArchiveInputStream(new FileInputStream(getFile("SHRUNK.ZIP")));
-        
-        ZipArchiveEntry entry = in.getNextZipEntry();
-        assertEquals("method", ZipMethod.UNSHRINKING.getCode(), entry.getMethod());
-        assertTrue(in.canReadEntryData(entry));
-        
-        FileInputStream original = new FileInputStream(getFile("test1.xml"));
-        try {
-            assertArrayEquals(IOUtils.toByteArray(original), IOUtils.toByteArray(in));
-        } finally {
-            original.close();
-        }
-        
-        entry = in.getNextZipEntry();
-        assertEquals("method", ZipMethod.UNSHRINKING.getCode(), entry.getMethod());
-        assertTrue(in.canReadEntryData(entry));
-        
-        original = new FileInputStream(getFile("test2.xml"));
-        try {
-            assertArrayEquals(IOUtils.toByteArray(original), IOUtils.toByteArray(in));
-        } finally {
-            original.close();
-        }
-    }
 }
