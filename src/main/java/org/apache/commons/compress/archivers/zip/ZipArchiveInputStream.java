@@ -53,9 +53,6 @@ public class ZipArchiveInputStream extends ArchiveInputStream {
 
     static final int BUFFER_SIZE = 512;
     
-    /** The zip encoding to use for filenames and the file comment. */
-    private final ZipEncoding zipEncoding;
-
     /** Wrapped stream, will always be a PushbackInputStream. */
     private final InputStream in;
 
@@ -132,7 +129,7 @@ public class ZipArchiveInputStream extends ArchiveInputStream {
     private int entriesRead = 0;
 
     public ZipArchiveInputStream(InputStream inputStream) {
-        this(inputStream, ZipEncodingHelper.UTF8);
+        this(inputStream, null);
     }
 
     /**
@@ -167,7 +164,6 @@ public class ZipArchiveInputStream extends ArchiveInputStream {
                                  String encoding,
                                  boolean useUnicodeExtraFields,
                                  boolean allowStoredEntriesWithDataDescriptor) {
-        zipEncoding = ZipEncodingHelper.getZipEncoding(encoding);
         in = new PushbackInputStream(inputStream, buf.capacity());
         this.allowStoredEntriesWithDataDescriptor =
             allowStoredEntriesWithDataDescriptor;
@@ -215,7 +211,6 @@ public class ZipArchiveInputStream extends ArchiveInputStream {
 
         final GeneralPurposeBit gpFlag = GeneralPurposeBit.parse(LFH_BUF, off);
         final boolean hasUTF8Flag = gpFlag.usesUTF8ForNames();
-        final ZipEncoding entryEncoding = hasUTF8Flag ? ZipEncodingHelper.UTF8_ZIP_ENCODING : zipEncoding;
         current.hasDataDescriptor = gpFlag.usesDataDescriptor();
         current.entry.setGeneralPurposeBit(gpFlag);
 
@@ -251,7 +246,7 @@ public class ZipArchiveInputStream extends ArchiveInputStream {
 
         byte[] fileName = new byte[fileNameLen];
         readFully(fileName);
-        current.entry.setName(entryEncoding.decode(fileName), fileName);
+        current.entry.setName(new String(fileName), fileName);
 
         byte[] extraData = new byte[extraLen];
         readFully(extraData);
