@@ -111,7 +111,7 @@ public class LongPathTest extends AbstractTestCase {
             expected.add("META-INF/");
             expected.add("META-INF/MANIFEST.MF");
         }
-        ArchiveInputStream ais = factory.createArchiveInputStream(new BufferedInputStream(new FileInputStream(file)));
+        ArchiveInputStream ais = new ZipArchiveInputStream(new BufferedInputStream(new FileInputStream(file)));
         // check if expected type recognised
         if (name.endsWith(".zip")){
             assertTrue(ais instanceof ZipArchiveInputStream);

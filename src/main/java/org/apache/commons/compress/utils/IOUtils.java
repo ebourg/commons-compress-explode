@@ -18,7 +18,6 @@
  */
 package org.apache.commons.compress.utils;
 
-import java.io.ByteArrayOutputStream;
 import java.io.Closeable;
 import java.io.IOException;
 import java.io.InputStream;
@@ -70,30 +69,6 @@ public final class IOUtils {
             count += n;
         }
         return count;
-    }
-    
-    /**
-     * Skips the given number of bytes by repeatedly invoking skip on
-     * the given input stream if necessary.
-     *
-     * <p>This method will only skip less than the requested number of
-     * bytes if the end of the input stream has been reached.</p>
-     *
-     * @param input stream to skip bytes in
-     * @param numToSkip the number of bytes to skip
-     * @return the number of bytes actually skipped
-     * @throws IOException
-     */
-    public static long skip(InputStream input, long numToSkip) throws IOException {
-        long available = numToSkip;
-        while (numToSkip > 0) {
-            long skipped = input.skip(numToSkip);
-            if (skipped == 0) {
-                break;
-            }
-            numToSkip -= skipped;
-        }
-        return available - numToSkip;
     }
 
     /**
@@ -150,35 +125,4 @@ public final class IOUtils {
     //
     // Assuming our copy() works just as well as theirs!  :-)
 
-    /**
-     * Gets the contents of an <code>InputStream</code> as a <code>byte[]</code>.
-     * <p>
-     * This method buffers the input internally, so there is no need to use a
-     * <code>BufferedInputStream</code>.
-     *
-     * @param input  the <code>InputStream</code> to read from
-     * @return the requested byte array
-     * @throws NullPointerException if the input is null
-     * @throws IOException if an I/O error occurs
-     * @since 1.5
-     */
-    public static byte[] toByteArray(final InputStream input) throws IOException {
-        final ByteArrayOutputStream output = new ByteArrayOutputStream();
-        copy(input, output);
-        return output.toByteArray();
-    }
-
-    /**
-     * Closes the given Closeable and swallows any IOException that may occur.
-     * @param c Closeable to close, can be null
-     * @since 1.7
-     */
-    public static void closeQuietly(Closeable c) {
-        if (c != null) {
-            try {
-                c.close();
-            } catch (IOException ignored) { // NOPMD
-            }
-        }
-    }
 }

@@ -214,27 +214,6 @@ public class ZipArchiveEntry extends java.util.zip.ZipEntry
     }
 
     /**
-     * Unix permission.
-     * @return the unix permissions
-     */
-    public int getUnixMode() {
-        return platform != PLATFORM_UNIX ? 0 :
-            (int) ((getExternalAttributes() >> SHORT_SHIFT) & SHORT_MASK);
-    }
-
-    /**
-     * Returns true if this entry represents a unix symlink,
-     * in which case the entry's content contains the target path
-     * for the symlink.
-     *
-     * @since 1.5
-     * @return true if the entry represents a unix symlink, false otherwise.
-     */
-    public boolean isUnixSymlink() {
-        return (getUnixMode() & UnixStat.LINK_FLAG) == UnixStat.LINK_FLAG;
-    }
-
-    /**
      * Platform specification to put into the &quot;version made
      * by&quot; part of the central file header.
      *

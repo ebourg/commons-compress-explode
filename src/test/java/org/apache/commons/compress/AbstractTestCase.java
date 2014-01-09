@@ -34,7 +34,7 @@ import java.util.Locale;
 import junit.framework.TestCase;
 import org.apache.commons.compress.archivers.ArchiveEntry;
 import org.apache.commons.compress.archivers.ArchiveInputStream;
-import org.apache.commons.compress.archivers.ArchiveStreamFactory;
+import org.apache.commons.compress.archivers.zip.ZipArchiveInputStream;
 import org.apache.commons.compress.utils.IOUtils;
 
 public abstract class AbstractTestCase extends TestCase {
@@ -44,8 +44,6 @@ public abstract class AbstractTestCase extends TestCase {
 
     private File archive; // used to delete the archive in tearDown
     protected List<String> archiveList; // Lists the content of the archive as originally created
-
-    protected ArchiveStreamFactory factory = new ArchiveStreamFactory();
 
     public AbstractTestCase() {
     }
@@ -157,7 +155,7 @@ public abstract class AbstractTestCase extends TestCase {
         final InputStream is = new FileInputStream(archive);
         try {
             final BufferedInputStream buf = new BufferedInputStream(is);
-            final ArchiveInputStream in = factory.createArchiveInputStream(buf);
+            final ArchiveInputStream in = new ZipArchiveInputStream(buf);
             this.checkArchiveContent(in, expected);
         } finally {
             is.close();

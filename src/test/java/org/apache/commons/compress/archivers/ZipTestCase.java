@@ -42,7 +42,7 @@ public final class ZipTestCase extends AbstractTestCase {
     public void testZipUnarchive() throws Exception {
         final File input = getFile("bla.zip");
         final InputStream is = new FileInputStream(input);
-        final ArchiveInputStream in = new ArchiveStreamFactory().createArchiveInputStream("zip", is);
+        final ArchiveInputStream in = new ZipArchiveInputStream(is);
         final ZipArchiveEntry entry = (ZipArchiveEntry)in.getNextEntry();
         final OutputStream out = new FileOutputStream(new File(dir, entry.getName()));
         IOUtils.copy(in, out);
@@ -113,13 +113,13 @@ public final class ZipTestCase extends AbstractTestCase {
         final InputStream is = new FileInputStream(input);
         ArchiveInputStream in = null;
         try {
-            in = new ArchiveStreamFactory().createArchiveInputStream("zip", is);
+            in = new ZipArchiveInputStream(is);
 
             ZipArchiveEntry entry = null;
             while((entry = (ZipArchiveEntry)in.getNextEntry()) != null) {
                 results.add(entry.getName());
 
-                ArchiveInputStream nestedIn = new ArchiveStreamFactory().createArchiveInputStream("zip", in);
+                ArchiveInputStream nestedIn = new ZipArchiveInputStream(in);
                 ZipArchiveEntry nestedEntry = null;
                 while((nestedEntry = (ZipArchiveEntry)nestedIn.getNextEntry()) != null) {
                     results.add(nestedEntry.getName());
