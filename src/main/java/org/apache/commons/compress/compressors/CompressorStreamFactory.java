@@ -22,18 +22,6 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 
-import org.apache.commons.compress.compressors.bzip2.BZip2CompressorInputStream;
-import org.apache.commons.compress.compressors.bzip2.BZip2CompressorOutputStream;
-import org.apache.commons.compress.compressors.gzip.GzipCompressorInputStream;
-import org.apache.commons.compress.compressors.gzip.GzipCompressorOutputStream;
-import org.apache.commons.compress.compressors.lzma.LZMACompressorInputStream;
-import org.apache.commons.compress.compressors.xz.XZCompressorInputStream;
-import org.apache.commons.compress.compressors.xz.XZCompressorOutputStream;
-import org.apache.commons.compress.compressors.xz.XZUtils;
-import org.apache.commons.compress.compressors.pack200.Pack200CompressorInputStream;
-import org.apache.commons.compress.compressors.pack200.Pack200CompressorOutputStream;
-import org.apache.commons.compress.compressors.snappy.FramedSnappyCompressorInputStream;
-import org.apache.commons.compress.compressors.snappy.SnappyCompressorInputStream;
 import org.apache.commons.compress.compressors.z.ZCompressorInputStream;
 import org.apache.commons.compress.utils.IOUtils;
 
@@ -158,27 +146,6 @@ public class CompressorStreamFactory {
             int signatureLength = IOUtils.readFully(in, signature);
             in.reset();
 
-            if (BZip2CompressorInputStream.matches(signature, signatureLength)) {
-                return new BZip2CompressorInputStream(in, decompressConcatenated);
-            }
-
-            if (GzipCompressorInputStream.matches(signature, signatureLength)) {
-                return new GzipCompressorInputStream(in, decompressConcatenated);
-            }
-
-            if (XZUtils.isXZCompressionAvailable() &&
-                XZCompressorInputStream.matches(signature, signatureLength)) {
-                return new XZCompressorInputStream(in, decompressConcatenated);
-            }
-
-            if (Pack200CompressorInputStream.matches(signature, signatureLength)) {
-                return new Pack200CompressorInputStream(in);
-            }
-
-            if (FramedSnappyCompressorInputStream.matches(signature, signatureLength)) {
-                return new FramedSnappyCompressorInputStream(in);
-            }
-
         } catch (IOException e) {
             throw new CompressorException("Failed to detect Compressor from InputStream.", e);
         }
@@ -205,34 +172,6 @@ public class CompressorStreamFactory {
 
         try {
 
-            if (GZIP.equalsIgnoreCase(name)) {
-                return new GzipCompressorInputStream(in);
-            }
-
-            if (BZIP2.equalsIgnoreCase(name)) {
-                return new BZip2CompressorInputStream(in);
-            }
-
-            if (XZ.equalsIgnoreCase(name)) {
-                return new XZCompressorInputStream(in);
-            }
-
-            if (LZMA.equalsIgnoreCase(name)) {
-                return new LZMACompressorInputStream(in);
-            }
-
-            if (PACK200.equalsIgnoreCase(name)) {
-                return new Pack200CompressorInputStream(in);
-            }
-
-            if (SNAPPY_RAW.equalsIgnoreCase(name)) {
-                return new SnappyCompressorInputStream(in);
-            }
-
-            if (SNAPPY_FRAMED.equalsIgnoreCase(name)) {
-                return new FramedSnappyCompressorInputStream(in);
-            }
-
             if (Z.equalsIgnoreCase(name)) {
                 return new ZCompressorInputStream(in);
             }
@@ -256,33 +195,7 @@ public class CompressorStreamFactory {
     public CompressorOutputStream createCompressorOutputStream(
             final String name, final OutputStream out)
             throws CompressorException {
-        if (name == null || out == null) {
-            throw new IllegalArgumentException(
-                    "Compressor name and stream must not be null.");
-        }
 
-        try {
-
-            if (GZIP.equalsIgnoreCase(name)) {
-                return new GzipCompressorOutputStream(out);
-            }
-
-            if (BZIP2.equalsIgnoreCase(name)) {
-                return new BZip2CompressorOutputStream(out);
-            }
-
-            if (XZ.equalsIgnoreCase(name)) {
-                return new XZCompressorOutputStream(out);
-            }
-
-            if (PACK200.equalsIgnoreCase(name)) {
-                return new Pack200CompressorOutputStream(out);
-            }
-
-        } catch (IOException e) {
-            throw new CompressorException(
-                    "Could not create CompressorOutputStream", e);
-        }
         throw new CompressorException("Compressor: " + name + " not found.");
     }
 }
