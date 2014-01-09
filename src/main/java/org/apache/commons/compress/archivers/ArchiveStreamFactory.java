@@ -23,16 +23,6 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 
-import org.apache.commons.compress.archivers.ar.ArArchiveInputStream;
-import org.apache.commons.compress.archivers.ar.ArArchiveOutputStream;
-import org.apache.commons.compress.archivers.arj.ArjArchiveInputStream;
-import org.apache.commons.compress.archivers.cpio.CpioArchiveInputStream;
-import org.apache.commons.compress.archivers.cpio.CpioArchiveOutputStream;
-import org.apache.commons.compress.archivers.dump.DumpArchiveInputStream;
-import org.apache.commons.compress.archivers.jar.JarArchiveInputStream;
-import org.apache.commons.compress.archivers.jar.JarArchiveOutputStream;
-import org.apache.commons.compress.archivers.tar.TarArchiveInputStream;
-import org.apache.commons.compress.archivers.tar.TarArchiveOutputStream;
 import org.apache.commons.compress.archivers.zip.ZipArchiveInputStream;
 import org.apache.commons.compress.archivers.zip.ZipArchiveOutputStream;
 import org.apache.commons.compress.utils.IOUtils;
@@ -158,45 +148,11 @@ public class ArchiveStreamFactory {
             throw new IllegalArgumentException("InputStream must not be null.");
         }
 
-        if (AR.equalsIgnoreCase(archiverName)) {
-            return new ArArchiveInputStream(in);
-        }
-        if (ARJ.equalsIgnoreCase(archiverName)) {
-            if (entryEncoding != null) {
-                return new ArjArchiveInputStream(in, entryEncoding);
-            } else {
-                return new ArjArchiveInputStream(in);
-            }
-        }
         if (ZIP.equalsIgnoreCase(archiverName)) {
             if (entryEncoding != null) {
                 return new ZipArchiveInputStream(in, entryEncoding);
             } else {
                 return new ZipArchiveInputStream(in);
-            }
-        }
-        if (TAR.equalsIgnoreCase(archiverName)) {
-            if (entryEncoding != null) {
-                return new TarArchiveInputStream(in, entryEncoding);
-            } else {
-                return new TarArchiveInputStream(in);
-            }
-        }
-        if (JAR.equalsIgnoreCase(archiverName)) {
-            return new JarArchiveInputStream(in);
-        }
-        if (CPIO.equalsIgnoreCase(archiverName)) {
-            if (entryEncoding != null) {
-                return new CpioArchiveInputStream(in, entryEncoding);
-            } else {
-                return new CpioArchiveInputStream(in);
-            }
-        }
-        if (DUMP.equalsIgnoreCase(archiverName)) {
-            if (entryEncoding != null) {
-                return new DumpArchiveInputStream(in, entryEncoding);
-            } else {
-                return new DumpArchiveInputStream(in);
             }
         }
 
@@ -222,9 +178,6 @@ public class ArchiveStreamFactory {
             throw new IllegalArgumentException("OutputStream must not be null.");
         }
 
-        if (AR.equalsIgnoreCase(archiverName)) {
-            return new ArArchiveOutputStream(out);
-        }
         if (ZIP.equalsIgnoreCase(archiverName)) {
             ZipArchiveOutputStream zip = new ZipArchiveOutputStream(out);
             if (entryEncoding != null) {
@@ -232,23 +185,7 @@ public class ArchiveStreamFactory {
             }
             return zip;
         }
-        if (TAR.equalsIgnoreCase(archiverName)) {
-            if (entryEncoding != null) {
-                return new TarArchiveOutputStream(out, entryEncoding);
-            } else {
-                return new TarArchiveOutputStream(out);
-            }
-        }
-        if (JAR.equalsIgnoreCase(archiverName)) {
-            return new JarArchiveOutputStream(out);
-        }
-        if (CPIO.equalsIgnoreCase(archiverName)) {
-            if (entryEncoding != null) {
-                return new CpioArchiveOutputStream(out, entryEncoding);
-            } else {
-                return new CpioArchiveOutputStream(out);
-            }
-        }
+
         throw new ArchiveException("Archiver: " + archiverName + " not found.");
     }
 
@@ -283,55 +220,8 @@ public class ArchiveStreamFactory {
                 } else {
                     return new ZipArchiveInputStream(in);
                 }
-            } else if (JarArchiveInputStream.matches(signature, signatureLength)) {
-                return new JarArchiveInputStream(in);
-            } else if (ArArchiveInputStream.matches(signature, signatureLength)) {
-                return new ArArchiveInputStream(in);
-            } else if (CpioArchiveInputStream.matches(signature, signatureLength)) {
-                return new CpioArchiveInputStream(in);
-            } else if (ArjArchiveInputStream.matches(signature, signatureLength)) {
-                return new ArjArchiveInputStream(in);
             }
 
-            // Dump needs a bigger buffer to check the signature;
-            final byte[] dumpsig = new byte[32];
-            in.mark(dumpsig.length);
-            signatureLength = IOUtils.readFully(in, dumpsig);
-            in.reset();
-            if (DumpArchiveInputStream.matches(dumpsig, signatureLength)) {
-                return new DumpArchiveInputStream(in);
-            }
-
-            // Tar needs an even bigger buffer to check the signature; read the first block
-            final byte[] tarheader = new byte[512];
-            in.mark(tarheader.length);
-            signatureLength = IOUtils.readFully(in, tarheader);
-            in.reset();
-            if (TarArchiveInputStream.matches(tarheader, signatureLength)) {
-                if (entryEncoding != null) {
-                    return new TarArchiveInputStream(in, entryEncoding);
-                } else {
-                    return new TarArchiveInputStream(in);
-                }
-            }
-            // COMPRESS-117 - improve auto-recognition
-            if (signatureLength >= 512) {
-                TarArchiveInputStream tais = null;
-                try {
-                    tais = new TarArchiveInputStream(new ByteArrayInputStream(tarheader));
-                    // COMPRESS-191 - verify the header checksum
-                    if (tais.getNextTarEntry().isCheckSumOK()) {
-                        return new TarArchiveInputStream(in);
-                    }
-                } catch (Exception e) { // NOPMD
-                    // can generate IllegalArgumentException as well
-                    // as IOException
-                    // autodetection, simply not a TAR
-                    // ignored
-                } finally {
-                    IOUtils.closeQuietly(tais);
-                }
-            }
         } catch (IOException e) {
             throw new ArchiveException("Could not use reset and mark operations.", e);
         }

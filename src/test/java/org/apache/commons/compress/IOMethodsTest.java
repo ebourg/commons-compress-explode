@@ -27,10 +27,6 @@ import java.io.OutputStream;
 import org.apache.commons.compress.archivers.ArchiveEntry;
 import org.apache.commons.compress.archivers.ArchiveInputStream;
 import org.apache.commons.compress.archivers.ArchiveOutputStream;
-import org.apache.commons.compress.archivers.ar.ArArchiveEntry;
-import org.apache.commons.compress.archivers.cpio.CpioArchiveEntry;
-import org.apache.commons.compress.archivers.jar.JarArchiveEntry;
-import org.apache.commons.compress.archivers.tar.TarArchiveEntry;
 import org.apache.commons.compress.archivers.zip.ZipArchiveEntry;
 
 /**
@@ -49,42 +45,9 @@ public class IOMethodsTest extends AbstractTestCase {
         }
     }
 
-    public void testWriteAr() throws Exception {
-        ArchiveEntry entry = new ArArchiveEntry("dummy", bytesToTest);
-        compareWrites("ar", entry);
-    }
-    public void testWriteCpio() throws Exception {
-        ArchiveEntry entry = new CpioArchiveEntry("dummy", bytesToTest);
-        compareWrites("cpio", entry);
-    }
-    public void testWriteJar() throws Exception {
-        ArchiveEntry entry = new JarArchiveEntry("dummy");
-        compareWrites("jar", entry);
-    }
-    public void testWriteTar() throws Exception {
-        TarArchiveEntry entry = new TarArchiveEntry("dummy");
-        entry.setSize(bytesToTest);
-        compareWrites("tar", entry);
-    }
     public void testWriteZip() throws Exception {
         ArchiveEntry entry = new ZipArchiveEntry("dummy");
         compareWrites("zip", entry);
-    }
-
-    public void testReadAr() throws Exception {
-        compareReads("ar");
-    }
-
-    public void testReadCpio() throws Exception {
-        compareReads("cpio");
-    }
-
-    public void testReadJar() throws Exception {
-        compareReads("jar");
-    }
-
-    public void testReadTar() throws Exception {
-        compareReads("tar");
     }
 
     public void testReadZip() throws Exception {

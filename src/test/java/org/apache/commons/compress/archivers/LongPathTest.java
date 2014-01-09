@@ -33,10 +33,6 @@ import junit.framework.Test;
 import junit.framework.TestSuite;
 
 import org.apache.commons.compress.AbstractTestCase;
-import org.apache.commons.compress.archivers.ar.ArArchiveInputStream;
-import org.apache.commons.compress.archivers.cpio.CpioArchiveInputStream;
-import org.apache.commons.compress.archivers.tar.TarArchiveEntry;
-import org.apache.commons.compress.archivers.tar.TarArchiveInputStream;
 import org.apache.commons.compress.archivers.zip.ZipArchiveInputStream;
 
 /**
@@ -103,12 +99,6 @@ public class LongPathTest extends AbstractTestCase {
 
     @Override
     protected String getExpectedString(ArchiveEntry entry) {
-        if (entry instanceof TarArchiveEntry) {
-            TarArchiveEntry tarEntry = (TarArchiveEntry) entry;
-            if (tarEntry.isSymbolicLink()) {
-                return tarEntry.getName() + " -> " + tarEntry.getLinkName();
-            }
-        }
         return entry.getName();
     }
 
@@ -123,34 +113,8 @@ public class LongPathTest extends AbstractTestCase {
         }
         ArchiveInputStream ais = factory.createArchiveInputStream(new BufferedInputStream(new FileInputStream(file)));
         // check if expected type recognised
-        if (name.endsWith(".tar")){
-            assertTrue(ais instanceof TarArchiveInputStream);
-        } else if (name.endsWith(".jar") || name.endsWith(".zip")){
+        if (name.endsWith(".zip")){
             assertTrue(ais instanceof ZipArchiveInputStream);
-        } else if (name.endsWith(".cpio")){
-            assertTrue(ais instanceof CpioArchiveInputStream);
-            // Hack: cpio does not add trailing "/" to directory names
-            for(int i=0; i < expected.size(); i++){
-                String ent = expected.get(i);
-                if (ent.endsWith("/")){
-                    expected.set(i, ent.substring(0, ent.length()-1));
-                }
-            }
-        } else if (name.endsWith(".ar")){
-            assertTrue(ais instanceof ArArchiveInputStream);
-            // CPIO does not store directories or directory names
-            expected.clear();
-            for(int i=0; i < fileList.size(); i++){
-                String ent = fileList.get(i);
-                if (!ent.endsWith("/")){// not a directory
-                    final int lastSlash = ent.lastIndexOf('/');
-                    if (lastSlash >= 0) { // extract path name
-                        expected.add(ent.substring(lastSlash+1, ent.length()));
-                    } else {
-                        expected.add(ent);
-                    }
-                }
-            }
         } else {
             fail("Unexpected file type: "+name);
         }

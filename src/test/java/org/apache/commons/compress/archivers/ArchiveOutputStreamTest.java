@@ -26,10 +26,6 @@ import java.io.InputStream;
 import java.io.OutputStream;
 
 import org.apache.commons.compress.AbstractTestCase;
-import org.apache.commons.compress.archivers.ar.ArArchiveEntry;
-import org.apache.commons.compress.archivers.cpio.CpioArchiveEntry;
-import org.apache.commons.compress.archivers.jar.JarArchiveEntry;
-import org.apache.commons.compress.archivers.tar.TarArchiveEntry;
 import org.apache.commons.compress.archivers.zip.ZipArchiveEntry;
 import org.apache.commons.compress.utils.IOUtils;
 
@@ -56,42 +52,6 @@ public class ArchiveOutputStreamTest extends AbstractTestCase {
         } catch (IOException io) {
             // Exception expected
         }
-
-        aos1 = factory.createArchiveOutputStream("jar", out1);
-        aos1.putArchiveEntry(new JarArchiveEntry("dummy"));
-        try {
-            aos1.finish();
-            fail("After putArchive should follow closeArchive");
-        } catch (IOException io) {
-            // Exception expected
-        }
-
-        aos1 = factory.createArchiveOutputStream("ar", out1);
-        aos1.putArchiveEntry(new ArArchiveEntry("dummy", 100));
-        try {
-            aos1.finish();
-            fail("After putArchive should follow closeArchive");
-        } catch (IOException io) {
-            // Exception expected
-        }
-
-        aos1 = factory.createArchiveOutputStream("cpio", out1);
-        aos1.putArchiveEntry(new CpioArchiveEntry("dummy"));
-        try {
-            aos1.finish();
-            fail("After putArchive should follow closeArchive");
-        } catch (IOException io) {
-            // Exception expected
-        }
-
-        aos1 = factory.createArchiveOutputStream("tar", out1);
-        aos1.putArchiveEntry(new TarArchiveEntry("dummy"));
-        try {
-            aos1.finish();
-            fail("After putArchive should follow closeArchive");
-        } catch (IOException io) {
-            // Exception expected
-        }
     }
 
     public void testOptionalFinish() throws Exception {
@@ -102,32 +62,12 @@ public class ArchiveOutputStreamTest extends AbstractTestCase {
         aos1.closeArchiveEntry();
         aos1.close();
 
-        aos1 = factory.createArchiveOutputStream("jar", out1);
-        aos1.putArchiveEntry(new JarArchiveEntry("dummy"));
-        aos1.closeArchiveEntry();
-        aos1.close();
         try {
             aos1.finish();
             fail("finish() cannot follow close()");
         } catch (IOException io) {
             // Exception expected
         }
-    }
-
-    public void testCallSequenceAr() throws Exception{
-        doCallSequence("Ar");
-    }
-
-    public void testCallSequenceCpio() throws Exception{
-        doCallSequence("Cpio");
-    }
-
-    public void testCallSequenceJar() throws Exception{
-        doCallSequence("Jar");
-    }
-
-    public void testCallSequenceTar() throws Exception{
-        doCallSequence("Tar");
     }
 
     public void testCallSequenceZip() throws Exception{
